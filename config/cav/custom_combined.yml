@@ -5,6 +5,7 @@ project:
 CAV_data:
   source_name: DoppelVer
   concept_data_path: /home/nthom/Downloads/Doppelganger/Images/CCA_Images/
+  concept_output_path: ./src/opensphere/data/concept/
   num_concepts_to_select: 390
 parallel:
   device_ids: [0]
