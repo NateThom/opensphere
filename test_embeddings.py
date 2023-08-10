@@ -1,7 +1,5 @@
-import os
 import os.path as osp
 import yaml
-import time
 import argparse
 
 import torch
@@ -9,11 +7,7 @@ import torch.nn as nn
 
 import matplotlib.pyplot as plt
 
-from tabulate import tabulate
-from datetime import datetime
-
 from utils import fill_config
-from dataset.utils import loadData
 from builder import build_dataloader, build_from_cfg
 
 

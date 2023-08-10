@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 from .utils import image_pipeline
 
 
-class IndividualDataset(Dataset):
+class ConceptDataset(Dataset):
     def __init__(self, name, data_dir, ann_path, test_mode=True):
         super().__init__()
 
