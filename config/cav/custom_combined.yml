@@ -1,0 +1,37 @@
+# yml for combined validation datasets
+project:
+  proj_dirs:
+  - /home/nthom/Documents/opensphere/project/custom_ms1m_sfnet20_sphereface2_identity_mworks12
+data:
+  source_name: DoppelVer_Doppelganger
+  source_data_path: /home/nthom/Downloads/Doppelganger/Images/CCA_Images/
+  source_ann_path: /home/nthom/Downloads/Doppelganger/DoppelgangerProtocol.csv
+  # num_identities_to_select: 10
+  num_identities_to_select: 390
+  # test:
+  # - dataset:
+  #     type: IndividualDataset
+  #     name: AbigailSpencer
+  #     data_dir: data/individual/
+  #     ann_path: data/individual/abigailspencer_ann.txt
+  #     test_mode: true
+  #   dataloader:
+  #     type: DataLoader
+  #     batch_size: 4096
+  #     shuffle: false
+  #     drop_last: false
+  #     num_workers: 4
+  # - dataset:
+  #     type: IndividualDataset
+  #     name: AlanCumming
+  #     data_dir: data/individual/
+  #     ann_path: data/individual/alancumming_ann.txt
+  #     test_mode: true
+  #   dataloader:
+  #     type: DataLoader
+  #     batch_size: 4096
+  #     shuffle: false
+  #     drop_last: false
+  #     num_workers: 4
+parallel:
+  device_ids: [0]
