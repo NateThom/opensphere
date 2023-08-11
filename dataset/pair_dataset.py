@@ -76,6 +76,14 @@ class PairDataset(Dataset):
 
         return get_metrics(self.labels, scores, FPRs)
 
+    def get_scores(self, feats):
+        # pair-wise scores
+        feats = F.normalize(feats, dim=1)
+        feats0 = feats[self.indices0, :]
+        feats1 = feats[self.indices1, :]
+        scores = torch.sum(feats0 * feats1, dim=1).tolist()
+        return scores, self.labels
+
     def __len__(self):
         return len(self.data_items)
 

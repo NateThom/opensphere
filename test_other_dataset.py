@@ -43,6 +43,7 @@ def get_feats(net, data, flip=True):
 def test_run(net, checkpoints, dataloaders):
     features = {}
     predictions = {}
+    labels = {}
     for n_ckpt, checkpoint in enumerate(checkpoints):
         # load model parameters
         net.load_state_dict(torch.load(checkpoint))
@@ -68,12 +69,13 @@ def test_run(net, checkpoints, dataloaders):
             dataset_feats = torch.cat(dataset_feats, dim=0)
             dataset_feats_indices = dataset_feats[dataset_indices]
             feats = F.normalize(feats, dim=1)
-            scores = dataloader.dataset.get_scores(dataset_feats_indices)
+            scores, sample_labels = dataloader.dataset.get_scores(dataset_feats_indices)
             # save
             name = dataloader.dataset.name
             if name not in features:
                 features[name] = dataset_feats
                 predictions[name] = scores
+                labels[name] = sample_labels
             else:
                 features[name] = torch.cat(
                     [features[name].unsqueeze(0), dataset_feats.unsqueeze(0)], 
@@ -83,7 +85,11 @@ def test_run(net, checkpoints, dataloaders):
                     [predictions[name].unsqueeze(0), scores.unsqueeze(0)], 
                     dim=0
                 )
-    return features, predictions
+                labels[name] = torch.cat(
+                    [labels[name].unsqueeze(0), sample_labels.unsqueeze(0)], 
+                    dim=0
+                )
+    return features, predictions, labels
 
 def main_worker(config):
     # parallel setting    
@@ -117,9 +123,9 @@ def main_worker(config):
             osp.join(model_dir, 'backbone_{}.pth'.format(save_iter))
             for save_iter in save_iters
         ]
-        features, predictions = test_run(bkb_net, bkb_paths, test_loaders)
+        features, predictions, labels = test_run(bkb_net, bkb_paths, test_loaders)
         
-        return features, predictions
+        return features, predictions, labels
 
 
 if __name__ == '__main__':
