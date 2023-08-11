@@ -155,7 +155,7 @@ if __name__ == '__main__':
     with open(args.config, 'r') as f:
         config = yaml.load(f, yaml.SafeLoader)
     config['data'] = fill_config(config['data'])
- 
+
     # override config
     if 'CUDA_VISIBLE_DEVICES' not in os.environ:
         raise KeyError('Devices IDs have to be specified.'

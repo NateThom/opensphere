@@ -1,11 +1,15 @@
+import os
 import os.path as osp
 import yaml
+import time
 import argparse
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
-import matplotlib.pyplot as plt
+from tabulate import tabulate
+from datetime import datetime
 
 from utils import fill_config
 from builder import build_dataloader, build_from_cfg
@@ -18,7 +22,8 @@ def parse_args():
             help='config files for testing datasets')
     parser.add_argument('--proj_dirs', '--list', nargs='+',
             help='the project directories to be tested')
-    
+    parser.add_argument('--start_time', 
+            help='time to start training')
     args = parser.parse_args()
 
     return args
@@ -37,39 +42,48 @@ def get_feats(net, data, flip=True):
 @torch.no_grad()
 def test_run(net, checkpoints, dataloaders):
     features = {}
+    predictions = {}
     for n_ckpt, checkpoint in enumerate(checkpoints):
         # load model parameters
         net.load_state_dict(torch.load(checkpoint))
         for n_loader, dataloader in enumerate(dataloaders):
-            print(dataloader.dataset.name, dataloader.dataset.data_dir)
             # get feats from test_loader
             dataset_feats = []
             dataset_indices = []
-            for n_batch, data in enumerate(dataloader):
+            for n_batch, (data, indices) in enumerate(dataloader):
                 # collect feature and indices
                 data = data.cuda()
+                indices = indices.tolist()
                 feats = get_feats(net, data)
-                # print(feats.shape)
                 dataset_feats.append(feats)
+                dataset_indices.extend(indices)
                 # progress
-                print(
-                    'feature extraction:', 
-                    'checkpoint: {}/{}'.format(n_ckpt+1, len(checkpoints)), 
-                    'dataset: {}/{}'.format(n_loader+1, len(dataloaders)), 
-                    'batch: {}/{}'.format(n_batch+1, len(dataloader)), 
-                    end='\r'
-                )
+                print('feature extraction:',
+                    'checkpoint: {}/{}'.format(n_ckpt+1, len(checkpoints)),
+                    'dataset: {}/{}'.format(n_loader+1, len(dataloaders)),
+                    'batch: {}/{}'.format(n_batch+1, len(dataloader)),
+                    end='\r')
             print('')
             # eval
             dataset_feats = torch.cat(dataset_feats, dim=0)
+            dataset_feats_indices = dataset_feats[dataset_indices]
+            feats = F.normalize(feats, dim=1)
+            scores = dataloader.dataset.get_scores(dataset_feats_indices)
             # save
             name = dataloader.dataset.name
             if name not in features:
                 features[name] = dataset_feats
+                predictions[name] = scores
             else:
-                features[name] = torch.cat([features[name].unsqueeze(0), dataset_feats.unsqueeze(0)], dim=0)
-
-    return features
+                features[name] = torch.cat(
+                    [features[name].unsqueeze(0), dataset_feats.unsqueeze(0)], 
+                    dim=0
+                )
+                predictions[name] = torch.cat(
+                    [predictions[name].unsqueeze(0), scores.unsqueeze(0)], 
+                    dim=0
+                )
+    return features, predictions
 
 def main_worker(config):
     # parallel setting    
@@ -103,9 +117,9 @@ def main_worker(config):
             osp.join(model_dir, 'backbone_{}.pth'.format(save_iter))
             for save_iter in save_iters
         ]
-        features = test_run(bkb_net, bkb_paths, test_loaders)
+        features, predictions = test_run(bkb_net, bkb_paths, test_loaders)
         
-        return features
+        return features, predictions
 
 
 if __name__ == '__main__':
@@ -115,11 +129,22 @@ if __name__ == '__main__':
     with open(args.config, 'r') as f:
         config = yaml.load(f, yaml.SafeLoader)
     config['data'] = fill_config(config['data'])
+ 
+    # override config
+    if 'CUDA_VISIBLE_DEVICES' not in os.environ:
+        raise KeyError('Devices IDs have to be specified.'
+                'CPU mode is not supported yet')
 
     if args.proj_dirs:
         config['project']['proj_dirs'] = args.proj_dirs
 
-    print(config)
-    exit(0)
-    
+    if args.start_time:
+        yy, mm, dd, h, m, s = args.start_time.split('-')
+        yy, mm, dd = int(yy), int(mm), int(dd)
+        h, m, s = int(h), int(m), int(s)
+        start_time = datetime(yy, mm, dd, h, m, s)
+        while datetime.now() < start_time:
+            print(datetime.now())
+            time.sleep(600)
+
     main_worker(config)

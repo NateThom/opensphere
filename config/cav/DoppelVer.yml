@@ -1,0 +1,28 @@
+# yml for combined validation datasets
+project:
+  proj_dirs:
+  - /home/nthom/Documents/opensphere/project/custom_ms1m_sfnet20_sphereface2_identity_mworks12
+CAV_data:
+  source_name: DoppelVer
+  concept_data_path: /home/nthom/Downloads/Doppelganger/Images/CCA_Images/
+  concept_output_path: ./src/opensphere/data/concept/
+  num_concepts_to_select: 10
+model_predictions_data:
+- dataset:
+    type: PairDataset
+    name: LFW
+    data_dir: src/opensphere/data/val/
+    ann_path: src/opensphere/data/val/lfw_ann.txt
+    test_mode: true
+    metrics:
+    - ACC
+    - EER
+    - AUC
+  dataloader:
+    type: DataLoader
+    batch_size: 4096
+    shuffle: false
+    drop_last: false
+    num_workers: 4
+parallel:
+  device_ids: [0]
