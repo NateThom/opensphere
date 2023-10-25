@@ -68,8 +68,18 @@ def test_run(net, checkpoints, dataloaders):
             # eval
             dataset_feats = torch.cat(dataset_feats, dim=0)
             dataset_feats_indices = dataset_feats[dataset_indices]
-            feats = F.normalize(feats, dim=1)
-            scores, sample_labels = dataloader.dataset.get_scores(dataset_feats_indices)
+            dataset_feats_indices = F.normalize(dataset_feats_indices, dim=1)
+            indices0, indices1, scores, sample_labels = dataloader.dataset.get_scores(dataset_feats_indices)
+            indices0 = torch.tensor(indices0)
+            indices1 = torch.tensor(indices1)
+            scores = torch.tensor(scores)
+            print(dataset_feats.shape)
+            print(indices0.shape)
+            print(indices1.shape)
+            print(scores.shape)
+            feature_triplets = torch.stack([indices0, indices1, scores], dim=1)
+            print(feature_triplets.shape)
+            feature_triplets = feature_triplets.tolist()
             # save
             name = dataloader.dataset.name
             if name not in features:

@@ -82,7 +82,8 @@ class PairDataset(Dataset):
         feats0 = feats[self.indices0, :]
         feats1 = feats[self.indices1, :]
         scores = torch.sum(feats0 * feats1, dim=1).tolist()
-        return scores, self.labels
+        # return feats0, feats1, scores, self.labels
+        return self.indices0, self.indices1, scores, self.labels
 
     def __len__(self):
         return len(self.data_items)
